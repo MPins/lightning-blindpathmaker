@@ -29,7 +29,7 @@ Output a key/value list of possible recipients:
 "max_cltv_expiry": uint32,
 }
 
-#The Metric
+# The Metric
 We are what we call "Anonymity" to set the blinded path. This value represents the number of nodes that could feasibly be recipients for the blinded payment:
 - They are within len(blinded hops) of the introduction node.
 - The fee/cltv policy to reach is node is < aggregate reported by the blinded path
