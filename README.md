@@ -41,7 +41,10 @@ could possibly be receiving this payment.
 # How to Run
 To run the Bind Path Maker is very simple, just clone the git repository on your machine.
 
+```sh
 git clone https://github.com/MPins/lightning-blindpathmaker
+```
+
 Go to the source folder and make sure you can run the blindpathmaker.py python program.
 
 python blindpathmaker.py <json_file> <amount> <destination>
