@@ -37,3 +37,12 @@ We are what we call "Anonymity" to set the blinded path. This value represents t
 A trivial example of this metric is that a value of 1 would mean that the blinded path simply
 selects the recipient as the introduction node and has no dummy hops - it is the only node that
 could possibly be receiving this payment.
+
+# How to Run
+To run the Bind Path Maker is very simple, just clone the git repository on your machine.
+
+git clone https://github.com/MPins/lightning-blindpathmaker
+Go to the source folder and make sure you can run the blindpathmaker.py python program.
+
+python blindpathmaker.py <json_file> <amount> <destination>
+You can start using some json file examples on the graphs folder. The nodenamer will create the file blindepath.json in the current directory.
