@@ -25,25 +25,17 @@ Optional Inputs:
 
 Output a key/value list of possible recipients:
 - A json representation of the blinded path(s) to use for the recipient
+```
 {
     "introduction_node": "pubkey",
-    "blinded_nodes": [
-        {
-            "node" : “pubkey1”,
-            "channel": "channel_id1",
-        }
-        ,
-        {
-            "node_id" : “pubkey2”,
-            "channel": "channel_id1",
-        } 
-    ],
-    "fee_base_msat": uint64,"fee_proportional_millionths": uint64,
+    "blinded_nodes": [“pubkey1”, “pubkey2”],
+    "fee_base_msat": uint64,
+    "fee_proportional_millionths": uint64,
     "htlc_minimum_msat": uint64,
     "cltv_expiry_delta": uint32,
     "max_cltv_expiry": uint32,
 }
-
+```
 # The Metric
 We are what we call "Anonymity" to set the blinded path. This value represents the number of nodes that could feasibly be recipients for the blinded payment:
 - They are within len(blinded hops) of the introduction node.
