@@ -19,9 +19,9 @@ Input format:
 - Recipient (string): hex encoded public key of the receiving node.
 
 Optional Inputs:
-- Min Real Blinded Hops: the minimum number of real hops to use in a blinded path.
-- Num Blinded Hops: the number of hops to use for each blinded path included in the invoice.
-- Max_blinded_paths: the maximum number of blinded paths to add to an invoice.
+- Min Real Blinded Hops: the minimum number of real hops to use in a blinded path. (default=1)
+- Num Blinded Hops: the number of hops to use for each blinded path included in the invoice. (default=3)
+- Max_blinded_paths: the maximum number of blinded paths to add to an invoice.(default=3)
 
 Output a key/value list of possible recipients:
 - A json representation of the blinded path(s) to use for the recipient
