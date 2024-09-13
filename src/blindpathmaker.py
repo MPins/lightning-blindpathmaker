@@ -6,6 +6,8 @@ import datetime
 import time
 from collections import Counter
 
+from state_machine import state_machine
+
 # This function receives input JSON file and create the new output JSON file 
 # without the alias field.
 # Sometimes the field ends on the next line with the comma (,)
@@ -26,8 +28,29 @@ def remove_alias(input_file, output_file):
                         alias = True
 
 def main(json_file, amount, dest):
-    print("Dummy")
+    try:
+        # Create an instance of the state machine
+        sm = state_machine()
 
+        # Open the JSON file for reading
+        with open(json_file, 'r', encoding='utf-8', errors='ignore') as file:
+            try:
+                parser = ijson.parse(file)  # Create an iterator for the JSON data
+                for prefix, event, value in parser:
+                    # Process the JSON events as needed
+                    # Perform transitions
+                    # If the transition results in completed nodes or edges data
+                    # Takes the data to mount the output
+                    if sm.event(event, prefix, value) is True:
+                        if sm.data['data_type'] == "nodes":
+                            print("Dummy")
+                        elif sm.data['data_type'] == "edges":
+                            print("Dummy")
+            except ijson.JSONError as e:
+                print(f"Error parsing JSON: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+                
 if __name__ == "__main__":
     if len(sys.argv) != 4:
         print("Usage: python blindpathmaker.py <graph json_file> <amount in satoshis> <destination nodeid>")
