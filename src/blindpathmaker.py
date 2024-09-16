@@ -43,7 +43,8 @@ def main(json_file, amount, dest):
                     # Takes the data to mount the output
                     if sm.event(event, prefix, value) is True:
                         if sm.data['data_type'] == "nodes":
-                            print("Dummy")
+                            if sm.data['nodes.item.pub_key'] == dest:
+                                
                         elif sm.data['data_type'] == "edges":
                             print("Dummy")
             except ijson.JSONError as e:
