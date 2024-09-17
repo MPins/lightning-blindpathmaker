@@ -26,11 +26,53 @@ def remove_alias(input_file, output_file):
                 else:
                     if ',' not in line:
                         alias = True
+class TreeNode:
+    def __init__(self, value):
+        self.value = value
+        self.children = []
+
+    def add_child(self, child_node):
+        # Adiciona um nó filho à lista de filhos
+        self.children.append(child_node)
+
+    def remove_child(self, child_node):
+        # Remove um nó filho da lista de filhos
+        self.children = [child for child in self.children if child != child_node]
+
+    def __repr__(self):
+        return f"{self.value}"
+
+def node_channels_peers(node_id: str, json_file: str):
+    sm1 = state_machine()
+
+    # Open the JSON file for reading
+    with open(json_file, 'r', encoding='utf-8', errors='ignore') as file:
+        try:
+            parser = ijson.parse(file)  # Create an iterator for the JSON data
+            for prefix, event, value in parser:
+                # Process the JSON events as needed
+                # Perform transitions
+                # If the transition results in completed nodes or edges data
+                # Takes the data to mount the output
+                if sm1.event(event, prefix, value) is True:
+                    if sm1.data['data_type'] == "edges":
+                        if sm1.data['edges.item.node1_pub'] == node_id.value:
+                            node_id.add_child(sm1.data['edges.item.node2_pub'])
+                        elif sm1.data['edges.item.node2_pub'] == node_id.value:
+                            node_id.add_child(sm1.data['edges.item.node21_pub'])
+            
+            return
+                    
+        except ijson.JSONError as e:
+            print(f"Error parsing JSON: {e}")
+
 
 def main(json_file, amount, dest):
     try:
         # Create an instance of the state machine
         sm = state_machine()
+        min_real_blinded_hops = 3
+        blinded_hops = []
 
         # Open the JSON file for reading
         with open(json_file, 'r', encoding='utf-8', errors='ignore') as file:
@@ -44,6 +86,8 @@ def main(json_file, amount, dest):
                     if sm.event(event, prefix, value) is True:
                         if sm.data['data_type'] == "nodes":
                             if sm.data['nodes.item.pub_key'] == dest:
+                                root = TreeNode(dest)
+                                node_channels_peers(root, json_file)
                                 
                         elif sm.data['data_type'] == "edges":
                             print("Dummy")
