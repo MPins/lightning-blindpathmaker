@@ -46,6 +46,7 @@ def node_channels_peers(node_id: str, json_file: str):
     sm1 = state_machine()
 
     # Open the JSON file for reading
+    # TODO An error occurred: maximum recursion depth exceeded
     with open(json_file, 'r', encoding='utf-8', errors='ignore') as file:
         try:
             parser = ijson.parse(file)  # Create an iterator for the JSON data
@@ -57,10 +58,13 @@ def node_channels_peers(node_id: str, json_file: str):
                 if sm1.event(event, prefix, value) is True:
                     if sm1.data['data_type'] == "edges":
                         if sm1.data['edges.item.node1_pub'] == node_id.value:
-                            node_id.add_child(sm1.data['edges.item.node2_pub'])
+                            child = TreeNode(sm1.data['edges.item.node2_pub'])
+                            node_id.add_child(child)
+                            node_channels_peers(child, json_file)
                         elif sm1.data['edges.item.node2_pub'] == node_id.value:
-                            node_id.add_child(sm1.data['edges.item.node21_pub'])
-            
+                            child = TreeNode(sm1.data['edges.item.node1_pub'])
+                            node_id.add_child(child)
+                            node_channels_peers(child, json_file) 
             return
                     
         except ijson.JSONError as e:
@@ -88,6 +92,7 @@ def main(json_file, amount, dest):
                             if sm.data['nodes.item.pub_key'] == dest:
                                 root = TreeNode(dest)
                                 node_channels_peers(root, json_file)
+                                break
                                 
                         elif sm.data['data_type'] == "edges":
                             print("Dummy")
