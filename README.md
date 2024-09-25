@@ -39,7 +39,7 @@ Output a key/value list of possible recipients:
 # The Metric
 We are using a metric that we call "Anonymity" to set the blinded path. This value represents the number of nodes that could feasibly be recipients for the blinded payment:
 - They are within len(blinded hops) of the introduction node.
-- The fee/cltv policy to reach is node is < aggregate reported by the blinded path
+- The fee/cltv policy to reach the node is less than the aggregate reported by the blinded path
 
 A trivial example of this metric is that a value of 1 would mean that the blinded path simply
 selects the recipient as the introduction node and has no dummy hops - it is the only node that
