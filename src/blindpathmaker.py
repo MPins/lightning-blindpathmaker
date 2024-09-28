@@ -27,13 +27,17 @@ def remove_alias(input_file, output_file):
                     if ',' not in line:
                         alias = True
 class TreeNode:
-    def __init__(self, value):
+    def __init__(self, value, channel = ""):
         self.value = value
         self.children = []
+        self.channels = []
+        if channel != "":
+            self.channels.append(channel)
 
-    def add_child(self, child_node):
+    def add_child(self, child_node, channel):
         # Adiciona um nó filho à lista de filhos
         self.children.append(child_node)
+        self.channels.append(channel)
 
     def remove_child(self, child_node):
         # Remove um nó filho da lista de filhos
@@ -57,14 +61,16 @@ def node_channels_peers(node_id: str, json_file: str):
                 # Takes the data to mount the output
                 if sm1.event(event, prefix, value) is True:
                     if sm1.data['data_type'] == "edges":
-                        if sm1.data['edges.item.node1_pub'] == node_id.value:
-                            child = TreeNode(sm1.data['edges.item.node2_pub'])
-                            node_id.add_child(child)
-                            node_channels_peers(child, json_file)
-                        elif sm1.data['edges.item.node2_pub'] == node_id.value:
-                            child = TreeNode(sm1.data['edges.item.node1_pub'])
-                            node_id.add_child(child)
-                            node_channels_peers(child, json_file) 
+                        channel = sm1.data['edges.item.channel_id']
+                        if channel not in node_id.channels:
+                            if sm1.data['edges.item.node1_pub'] == node_id.value:
+                                child = TreeNode(sm1.data['edges.item.node2_pub'], channel)
+                                node_id.add_child(child, channel)
+                                node_channels_peers(child, json_file)
+                            elif sm1.data['edges.item.node2_pub'] == node_id.value:
+                                child = TreeNode(sm1.data['edges.item.node1_pub'], channel)
+                                node_id.add_child(child, channel)
+                                node_channels_peers(child, json_file) 
             return
                     
         except ijson.JSONError as e:
