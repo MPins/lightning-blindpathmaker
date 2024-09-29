@@ -8,6 +8,11 @@ from collections import Counter
 
 from state_machine import state_machine
 
+# This is a list of nodes which channels are being explored
+# As we want to create a tree representing the connections between nodes, we avoid a connection pointing
+# back to an element of the tree. It will be considered as a ramification later on the tree. 
+nodesOnRecursivePath = []
+
 # This function receives input JSON file and create the new output JSON file 
 # without the alias field.
 # Sometimes the field ends on the next line with the comma (,)
@@ -33,6 +38,7 @@ class TreeNode:
         self.channels = []
         if channel != "":
             self.channels.append(channel)
+        nodesOnRecursivePath.append(value)
 
     def add_child(self, child_node, channel):
         # Adiciona um nó filho à lista de filhos
@@ -63,14 +69,16 @@ def node_channels_peers(node_id: str, json_file: str):
                     if sm1.data['data_type'] == "edges":
                         channel = sm1.data['edges.item.channel_id']
                         if channel not in node_id.channels:
-                            if sm1.data['edges.item.node1_pub'] == node_id.value:
+                            if sm1.data['edges.item.node1_pub'] == node_id.value and sm1.data['edges.item.node2_pub'] not in nodesOnRecursivePath:
                                 child = TreeNode(sm1.data['edges.item.node2_pub'], channel)
                                 node_id.add_child(child, channel)
                                 node_channels_peers(child, json_file)
-                            elif sm1.data['edges.item.node2_pub'] == node_id.value:
+                            elif sm1.data['edges.item.node2_pub'] == node_id.value and sm1.data['edges.item.node1_pub'] not in nodesOnRecursivePath:
                                 child = TreeNode(sm1.data['edges.item.node1_pub'], channel)
                                 node_id.add_child(child, channel)
-                                node_channels_peers(child, json_file) 
+                                node_channels_peers(child, json_file)
+            # Exhausted the node_id connections it can be removed from the recursive list
+            nodesOnRecursivePath.remove(node_id.value)
             return
                     
         except ijson.JSONError as e:
