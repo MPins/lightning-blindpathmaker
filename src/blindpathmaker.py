@@ -13,6 +13,9 @@ from state_machine import state_machine
 # back to an element of the tree. It will be considered as a ramification later on the tree. 
 nodesOnRecursivePath = []
 
+# Default vale to num of blinded hops
+num_blinded_hops = 2
+
 # This function receives input JSON file and create the new output JSON file 
 # without the alias field.
 # Sometimes the field ends on the next line with the comma (,)
@@ -69,11 +72,11 @@ def node_channels_peers(node_id: str, json_file: str):
                     if sm1.data['data_type'] == "edges":
                         channel = sm1.data['edges.item.channel_id']
                         if channel not in node_id.channels:
-                            if sm1.data['edges.item.node1_pub'] == node_id.value and sm1.data['edges.item.node2_pub'] not in nodesOnRecursivePath:
+                            if sm1.data['edges.item.node1_pub'] == node_id.value and sm1.data['edges.item.node2_pub'] not in nodesOnRecursivePath and len(nodesOnRecursivePath) <= num_blinded_hops:
                                 child = TreeNode(sm1.data['edges.item.node2_pub'], channel)
                                 node_id.add_child(child, channel)
                                 node_channels_peers(child, json_file)
-                            elif sm1.data['edges.item.node2_pub'] == node_id.value and sm1.data['edges.item.node1_pub'] not in nodesOnRecursivePath:
+                            elif sm1.data['edges.item.node2_pub'] == node_id.value and sm1.data['edges.item.node1_pub'] not in nodesOnRecursivePath and len(nodesOnRecursivePath) <= num_blinded_hops:
                                 child = TreeNode(sm1.data['edges.item.node1_pub'], channel)
                                 node_id.add_child(child, channel)
                                 node_channels_peers(child, json_file)
@@ -116,12 +119,15 @@ def main(json_file, amount, dest):
         print(f"An error occurred: {e}")
                 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python blindpathmaker.py <graph json_file> <amount in satoshis> <destination nodeid>")
+    if len(sys.argv) < 4 or len(sys.argv) > 5:
+        print("Usage: python blindpathmaker.py <graph json_file> <amount in satoshis> <destination nodeid> <num blinded hops>")
+        print(" <num blinded hops> is optional, default is 2")
         sys.exit(1)
     json_file = sys.argv[1]
     amount = sys.argv[2]
     dest = sys.argv[3]
+    if len(sys.argv) == 5:
+        num_blinded_hops = sys.argv[4]
 
     # create another file ignoring the alias field due the erros it cause when parsing it
     # because of unexpected characteres
