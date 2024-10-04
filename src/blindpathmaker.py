@@ -34,6 +34,22 @@ def remove_alias(input_file, output_file):
                 else:
                     if ',' not in line:
                         alias = True
+
+class Channel:
+    def __init__(self,channel_id, capacity, node1_pub, node2_pub, node1_time_lock_delta,
+                 node2_time_lock_delta, node1_fee_base_msat, node1_fee_rate_milli_msat,
+                 node2_fee_base_msat, node2_fee_rate_milli_msat):
+        self.channel_id = channel_id
+        self.capacity = capacity
+        self.node1_pub = node1_pub
+        self.node2_pub = node2_pub
+        self.node1_time_lock_delta = node1_time_lock_delta
+        self.node2_time_lock_delta = node2_time_lock_delta
+        self.node1_fee_base_msat = node1_fee_base_msat
+        self.node1_fee_rate_milli_msat = node1_fee_rate_milli_msat
+        self.node2_fee_base_msat = node2_fee_base_msat
+        self.node2_fee_rate_milli_msat = node2_fee_rate_milli_msat
+
 class TreeNode:
     def __init__(self, value, channel = ""):
         self.value = value
@@ -70,7 +86,12 @@ def node_channels_peers(node_id: str, json_file: str):
                 # Takes the data to mount the output
                 if sm1.event(event, prefix, value) is True:
                     if sm1.data['data_type'] == "edges":
-                        channel = sm1.data['edges.item.channel_id']
+                        channel = Channel(sm1.data['edges.item.channel_id'], sm1.data['edges.item.capacity'],
+                                          sm1.data['edges.item.node1_pub'], sm1.data['edges.item.node2_pub'],
+                                          sm1.data['edges.item.node1_policy.time_lock_delta'],sm1.data['edges.item.node2_policy.time_lock_delta'],
+                                          sm1.data['edges.item.node1_policy.fee_base_msat'], sm1.data['edges.item.node1_policy.fee_rate_milli_msat'],
+                                          sm1.data['edges.item.node2_policy.fee_base_msat'], sm1.data['edges.item.node2_policy.fee_rate_milli_msat']
+                                          )
                         if channel not in node_id.channels:
                             if sm1.data['edges.item.node1_pub'] == node_id.value and sm1.data['edges.item.node2_pub'] not in nodesOnRecursivePath and len(nodesOnRecursivePath) <= num_blinded_hops:
                                 child = TreeNode(sm1.data['edges.item.node2_pub'], channel)
