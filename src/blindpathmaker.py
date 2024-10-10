@@ -131,9 +131,8 @@ def main(json_file, amount, dest):
                                 root = TreeNode(dest)
                                 node_channels_peers(root, json_file)
                                 break
-                                
-                        elif sm.data['data_type'] == "edges":
-                            print("Dummy")
+                if 'root' not in locals():
+                    print(f"Destination not found: {dest}")
             except ijson.JSONError as e:
                 print(f"Error parsing JSON: {e}")
     except Exception as e:
