@@ -38,7 +38,8 @@ def remove_alias(input_file, output_file):
 class Channel:
     def __init__(self,channel_id, capacity, node1_pub, node2_pub, node1_time_lock_delta,
                  node2_time_lock_delta, node1_fee_base_msat, node1_fee_rate_milli_msat,
-                 node2_fee_base_msat, node2_fee_rate_milli_msat):
+                 node2_fee_base_msat, node2_fee_rate_milli_msat, node1_min_htlc, node2_min_htlc,
+                 node1_max_htlc_msat, node2_max_htlc_msat):
         self.channel_id = channel_id
         self.capacity = capacity
         self.node1_pub = node1_pub
@@ -49,6 +50,10 @@ class Channel:
         self.node1_fee_rate_milli_msat = node1_fee_rate_milli_msat
         self.node2_fee_base_msat = node2_fee_base_msat
         self.node2_fee_rate_milli_msat = node2_fee_rate_milli_msat
+        self.node1_min_htlc = node1_min_htlc
+        self.node2_min_htlc = node2_min_htlc
+        self.node1_max_htlc_msat = node1_max_htlc_msat
+        self.node2_max_htlc_msat = node2_max_htlc_msat
 
 class TreeNode:
     def __init__(self, value, channel = ""):
@@ -90,7 +95,9 @@ def node_channels_peers(node_id: str, json_file: str):
                                           sm1.data['edges.item.node1_pub'], sm1.data['edges.item.node2_pub'],
                                           sm1.data['edges.item.node1_policy.time_lock_delta'],sm1.data['edges.item.node2_policy.time_lock_delta'],
                                           sm1.data['edges.item.node1_policy.fee_base_msat'], sm1.data['edges.item.node1_policy.fee_rate_milli_msat'],
-                                          sm1.data['edges.item.node2_policy.fee_base_msat'], sm1.data['edges.item.node2_policy.fee_rate_milli_msat']
+                                          sm1.data['edges.item.node2_policy.fee_base_msat'], sm1.data['edges.item.node2_policy.fee_rate_milli_msat'],
+                                          sm1.data['edges.item.node1_policy.min_htlc'], sm1.data['edges.item.node2_policy.min_htlc'],
+                                          sm1.data['edges.item.node1_policy.max_htlc_msat'], sm1.data['edges.item.node2_policy.max_htlc_msat'] 
                                           )
                         if channel not in node_id.channels:
                             if sm1.data['edges.item.node1_pub'] == node_id.value and sm1.data['edges.item.node2_pub'] not in nodesOnRecursivePath and len(nodesOnRecursivePath) <= num_blinded_hops:
@@ -133,6 +140,7 @@ def main(json_file, amount, dest):
                                 break
                 if 'root' not in locals():
                     print(f"Destination not found: {dest}")
+                
             except ijson.JSONError as e:
                 print(f"Error parsing JSON: {e}")
     except Exception as e:
