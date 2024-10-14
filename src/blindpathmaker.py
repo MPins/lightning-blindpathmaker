@@ -11,7 +11,7 @@ from state_machine import state_machine
 # This is a list of nodes which channels are being explored
 # As we want to create a tree representing the connections between nodes, we avoid a connection pointing
 # back to an element of the tree. It will be considered as a ramification later on the tree. 
-nodesOnRecursivePath = []
+recursive_depth = 0
 
 # Default vale to num of blinded hops
 num_blinded_hops = 2
@@ -35,81 +35,123 @@ def remove_alias(input_file, output_file):
                     if ',' not in line:
                         alias = True
 
-class Channel:
-    def __init__(self,channel_id, capacity, node1_pub, node2_pub, node1_time_lock_delta,
-                 node2_time_lock_delta, node1_fee_base_msat, node1_fee_rate_milli_msat,
-                 node2_fee_base_msat, node2_fee_rate_milli_msat, node1_min_htlc, node2_min_htlc,
-                 node1_max_htlc_msat, node2_max_htlc_msat):
-        self.channel_id = channel_id
-        self.capacity = capacity
-        self.node1_pub = node1_pub
-        self.node2_pub = node2_pub
-        self.node1_time_lock_delta = node1_time_lock_delta
-        self.node2_time_lock_delta = node2_time_lock_delta
-        self.node1_fee_base_msat = node1_fee_base_msat
-        self.node1_fee_rate_milli_msat = node1_fee_rate_milli_msat
-        self.node2_fee_base_msat = node2_fee_base_msat
-        self.node2_fee_rate_milli_msat = node2_fee_rate_milli_msat
-        self.node1_min_htlc = node1_min_htlc
-        self.node2_min_htlc = node2_min_htlc
-        self.node1_max_htlc_msat = node1_max_htlc_msat
-        self.node2_max_htlc_msat = node2_max_htlc_msat
+class BlindedPath:
+    def __init__ (self):
+        self.node_id = []
+        self.channel_id = []
+        self.max_capacity = 0
+        self.total_time_lock_delta = 0
+        self.total_fee_base_msat = 0
+        self.total_fee_rate_milli_msat = 0
+        self.min_htlc = 0
+        self.max_htlc = 0
+        
+    def add_hop(self, node_id, channel_id, capacity: int, time_lock_delta: int, fee_base_msat: int, fee_rate_milli_msat: int,
+                  min_htlc: int, max_htlc: int):
+        self.node_id.insert(0, node_id)
+        self.channel_id.insert(0, channel_id)
+        if capacity < self.max_capacity or self.max_capacity == 0:
+            self.max_capacity = capacity
+        self.total_time_lock_delta += time_lock_delta
+        self.total_fee_base_msat += fee_base_msat
+        self.total_fee_rate_milli_msat += fee_rate_milli_msat
+        if min_htlc > self.min_htlc:
+            self.min_htlc = min_htlc
+        if max_htlc < self.max_htlc or self.max_htlc == 0:
+            self.max_htlc = max_htlc
 
-class TreeNode:
-    def __init__(self, value, channel = ""):
-        self.value = value
-        self.children = []
-        self.channels = []
-        if channel != "":
-            self.channels.append(channel)
-        nodesOnRecursivePath.append(value)
+# TODO clone the path until the recursive depth   
+def clone_path(fromPath: BlindedPath, toPath: BlindedPath):
+    toPath.node_id = fromPath.node_id
+    toPath.channel_id = fromPath.channel_id
+    toPath.max_capacity = fromPath.max_capacity
+    toPath.total_time_lock_delta = fromPath.total_time_lock_delta
+    toPath.total_fee_base_msat = fromPath.total_fee_base_msat
+    toPath.total_fee_rate_milli_msat = fromPath.total_fee_rate_milli_msat
+    toPath.min_htlc = fromPath.min_htlc
+    toPath.max_htlc = fromPath.max_htlc
 
-    def add_child(self, child_node, channel):
-        # Adiciona um nó filho à lista de filhos
-        self.children.append(child_node)
-        self.channels.append(channel)
-
-    def remove_child(self, child_node):
-        # Remove um nó filho da lista de filhos
-        self.children = [child for child in self.children if child != child_node]
-
-    def __repr__(self):
-        return f"{self.value}"
-
-def node_channels_peers(node_id: str, json_file: str):
+def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channels_visited = []):
+    global recursive_depth, num_blinded_hops
     sm1 = state_machine()
 
     # Open the JSON file for reading
-    # TODO An error occurred: maximum recursion depth exceeded
     with open(json_file, 'r', encoding='utf-8', errors='ignore') as file:
         try:
             parser = ijson.parse(file)  # Create an iterator for the JSON data
+            path_is_used = False
+            recursive_depth += 1
             for prefix, event, value in parser:
                 # Process the JSON events as needed
                 # Perform transitions
                 # If the transition results in completed nodes or edges data
                 # Takes the data to mount the output
                 if sm1.event(event, prefix, value) is True:
-                    if sm1.data['data_type'] == "edges":
-                        channel = Channel(sm1.data['edges.item.channel_id'], sm1.data['edges.item.capacity'],
-                                          sm1.data['edges.item.node1_pub'], sm1.data['edges.item.node2_pub'],
-                                          sm1.data['edges.item.node1_policy.time_lock_delta'],sm1.data['edges.item.node2_policy.time_lock_delta'],
-                                          sm1.data['edges.item.node1_policy.fee_base_msat'], sm1.data['edges.item.node1_policy.fee_rate_milli_msat'],
-                                          sm1.data['edges.item.node2_policy.fee_base_msat'], sm1.data['edges.item.node2_policy.fee_rate_milli_msat'],
-                                          sm1.data['edges.item.node1_policy.min_htlc'], sm1.data['edges.item.node2_policy.min_htlc'],
-                                          sm1.data['edges.item.node1_policy.max_htlc_msat'], sm1.data['edges.item.node2_policy.max_htlc_msat'] 
-                                          )
-                        if channel not in node_id.channels:
-                            if sm1.data['edges.item.node1_pub'] == node_id.value and sm1.data['edges.item.node2_pub'] not in nodesOnRecursivePath and len(nodesOnRecursivePath) <= num_blinded_hops:
-                                child = TreeNode(sm1.data['edges.item.node2_pub'], channel)
-                                node_id.add_child(child, channel)
-                                node_channels_peers(child, json_file)
-                            elif sm1.data['edges.item.node2_pub'] == node_id.value and sm1.data['edges.item.node1_pub'] not in nodesOnRecursivePath and len(nodesOnRecursivePath) <= num_blinded_hops:
-                                child = TreeNode(sm1.data['edges.item.node1_pub'], channel)
-                                node_id.add_child(child, channel)
-                                node_channels_peers(child, json_file)
+                    if sm1.data['data_type'] == "edges":                                      
+                        if sm1.data['edges.item.channel_id'] not in channels_visited:
+                            if sm1.data['edges.item.node1_pub'] == node_id:
+                                if recursive_depth <= num_blinded_hops:
+                                    channels_visited.append(sm1.data['edges.item.channel_id'])
+                                    if path_is_used is True:
+                                        paths.append(BlindedPath())
+                                        if recursive_depth > 1:
+                                            clone_path(path, paths[len(paths)-1])
+                                        paths[len(paths)-1].add_hop(sm1.data['edges.item.node2_pub'],
+                                                                sm1.data['edges.item.channel_id'],
+                                                                int(sm1.data['edges.item.capacity']),
+                                                                int(sm1.data['edges.item.node2_policy.time_lock_delta']),
+                                                                int(sm1.data['edges.item.node2_policy.fee_base_msat']),
+                                                                int(sm1.data['edges.item.node2_policy.fee_rate_milli_msat']),
+                                                                int(sm1.data['edges.item.node2_policy.min_htlc']),
+                                                                int(sm1.data['edges.item.node2_policy.max_htlc_msat'])
+                                                                )
+                                        node_channels_peers(sm1.data['edges.item.node2_pub'], paths[len(paths)-1], json_file, channels_visited)
+                                    else:
+                                        path_is_used = True
+                                        path.add_hop(sm1.data['edges.item.node2_pub'],
+                                                    sm1.data['edges.item.channel_id'],
+                                                    int(sm1.data['edges.item.capacity']),
+                                                    int(sm1.data['edges.item.node2_policy.time_lock_delta']),
+                                                    int(sm1.data['edges.item.node2_policy.fee_base_msat']),
+                                                    int(sm1.data['edges.item.node2_policy.fee_rate_milli_msat']),
+                                                    int(sm1.data['edges.item.node2_policy.min_htlc']),
+                                                    int(sm1.data['edges.item.node2_policy.max_htlc_msat'])                                                )
+                                        node_channels_peers(sm1.data['edges.item.node2_pub'], path, json_file, channels_visited)
+                                else:
+                                    break                                    
+                            elif sm1.data['edges.item.node2_pub'] == node_id:
+                                if recursive_depth <= num_blinded_hops:
+                                    channels_visited.append(sm1.data['edges.item.channel_id'])
+                                    if path_is_used is True:
+                                        paths.append(BlindedPath())
+                                        if recursive_depth > 1:
+                                            clone_path(path, paths[len(paths)-1])
+                                        paths[len(paths)-1].add_hop(sm1.data['edges.item.node1_pub'],
+                                                                sm1.data['edges.item.channel_id'],
+                                                                int(sm1.data['edges.item.capacity']),
+                                                                int(sm1.data['edges.item.node1_policy.time_lock_delta']),
+                                                                int(sm1.data['edges.item.node1_policy.fee_base_msat']),
+                                                                int(sm1.data['edges.item.node1_policy.fee_rate_milli_msat']),
+                                                                int(sm1.data['edges.item.node1_policy.min_htlc']),
+                                                                int(sm1.data['edges.item.node1_policy.max_htlc_msat'])
+                                                                )
+                                        node_channels_peers(sm1.data['edges.item.node1_pub'], paths[len(paths)-1], json_file, channels_visited)
+                                    else:
+                                        path_is_used = True
+                                        path.add_hop(sm1.data['edges.item.node1_pub'],
+                                                    sm1.data['edges.item.channel_id'],
+                                                    int(sm1.data['edges.item.capacity']),
+                                                    int(sm1.data['edges.item.node1_policy.time_lock_delta']),
+                                                    int(sm1.data['edges.item.node1_policy.fee_base_msat']),
+                                                    int(sm1.data['edges.item.node1_policy.fee_rate_milli_msat']),
+                                                    int(sm1.data['edges.item.node1_policy.min_htlc']),
+                                                    int(sm1.data['edges.item.node1_policy.max_htlc_msat'])
+                                                    )
+                                        node_channels_peers(sm1.data['edges.item.node1_pub'], path, json_file, channels_visited)
+                                else:    
+                                    break                                    
             # Exhausted the node_id connections it can be removed from the recursive list
-            nodesOnRecursivePath.remove(node_id.value)
+            recursive_depth -= 1
             return
                     
         except ijson.JSONError as e:
@@ -117,12 +159,10 @@ def node_channels_peers(node_id: str, json_file: str):
 
 
 def main(json_file, amount, dest):
+    global paths
     try:
         # Create an instance of the state machine
         sm = state_machine()
-        min_real_blinded_hops = 3
-        blinded_hops = []
-
         # Open the JSON file for reading
         with open(json_file, 'r', encoding='utf-8', errors='ignore') as file:
             try:
@@ -135,8 +175,9 @@ def main(json_file, amount, dest):
                     if sm.event(event, prefix, value) is True:
                         if sm.data['data_type'] == "nodes":
                             if sm.data['nodes.item.pub_key'] == dest:
-                                root = TreeNode(dest)
-                                node_channels_peers(root, json_file)
+#                                root = TreeNode(dest)
+                                paths.append(BlindedPath())
+                                node_channels_peers(dest, paths[len(paths)-1] , json_file)
                                 break
                 if 'root' not in locals():
                     print(f"Destination not found: {dest}")
