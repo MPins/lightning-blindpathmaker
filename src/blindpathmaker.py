@@ -12,6 +12,7 @@ from state_machine import state_machine
 # As we want to create a tree representing the connections between nodes, we avoid a connection pointing
 # back to an element of the tree. It will be considered as a ramification later on the tree. 
 recursive_depth = 0
+paths = []
 
 # Default vale to num of blinded hops
 num_blinded_hops = 2
@@ -39,40 +40,64 @@ class BlindedPath:
     def __init__ (self):
         self.node_id = []
         self.channel_id = []
+        self.capacity = []
         self.max_capacity = 0
+        self.time_lock_delta = []
         self.total_time_lock_delta = 0
+        self.fee_base_msat = []
         self.total_fee_base_msat = 0
+        self.fee_rate_milli_msat = []
         self.total_fee_rate_milli_msat = 0
-        self.min_htlc = 0
-        self.max_htlc = 0
+        self.min_htlc = []
+        self.path_min_htlc = 0
+        self.max_htlc = []
+        self.path_max_htlc = 0
         
     def add_hop(self, node_id, channel_id, capacity: int, time_lock_delta: int, fee_base_msat: int, fee_rate_milli_msat: int,
                   min_htlc: int, max_htlc: int):
         self.node_id.insert(0, node_id)
         self.channel_id.insert(0, channel_id)
+        self.capacity.insert(0, capacity)
         if capacity < self.max_capacity or self.max_capacity == 0:
             self.max_capacity = capacity
+        self.time_lock_delta.insert(0, time_lock_delta)
         self.total_time_lock_delta += time_lock_delta
+        self.fee_base_msat.insert(0, fee_base_msat)
         self.total_fee_base_msat += fee_base_msat
+        self.fee_rate_milli_msat.insert(0, fee_rate_milli_msat)
         self.total_fee_rate_milli_msat += fee_rate_milli_msat
-        if min_htlc > self.min_htlc:
-            self.min_htlc = min_htlc
-        if max_htlc < self.max_htlc or self.max_htlc == 0:
-            self.max_htlc = max_htlc
+        self.min_htlc.insert(0, min_htlc)
+        if min_htlc > self.path_min_htlc:
+            self.path_min_htlc = min_htlc
+        self.max_htlc.insert(0, max_htlc)
+        if max_htlc < self.path_max_htlc or self.path_max_htlc == 0:
+            self.path_max_htlc = max_htlc
 
 # TODO clone the path until the recursive depth   
 def clone_path(fromPath: BlindedPath, toPath: BlindedPath):
-    toPath.node_id = fromPath.node_id
-    toPath.channel_id = fromPath.channel_id
-    toPath.max_capacity = fromPath.max_capacity
-    toPath.total_time_lock_delta = fromPath.total_time_lock_delta
-    toPath.total_fee_base_msat = fromPath.total_fee_base_msat
-    toPath.total_fee_rate_milli_msat = fromPath.total_fee_rate_milli_msat
-    toPath.min_htlc = fromPath.min_htlc
-    toPath.max_htlc = fromPath.max_htlc
+    # Cloning the path discarting the alst hop, as we are inserting a hop at the same level 
+    # of the last level.
+    toPath.node_id = fromPath.node_id[1:]
+    toPath.channel_id = fromPath.channel_id[1:]
+    for index in range(recursive_depth - 2, -1, -1):
+        toPath.capacity.insert(0, fromPath.capacity[index])
+        if fromPath.capacity[index] < toPath.max_capacity or toPath.max_capacity == 0:
+            toPath.max_capacity = fromPath.capacity[index]
+        toPath.time_lock_delta.insert(0, fromPath.time_lock_delta[index])
+        toPath.total_time_lock_delta += fromPath.time_lock_delta[index]
+        toPath.fee_base_msat.insert(0, fromPath.fee_base_msat[index])
+        toPath.total_fee_base_msat += fromPath.fee_base_msat[index]
+        toPath.fee_rate_milli_msat.insert(0, fromPath.fee_rate_milli_msat[index])
+        toPath.total_fee_rate_milli_msat += fromPath.fee_rate_milli_msat[index]
+        toPath.min_htlc.insert(0, fromPath.min_htlc[index])
+        if fromPath.min_htlc[index] > toPath.path_min_htlc:
+            toPath.path_min_htlc = fromPath.min_htlc[index]
+        toPath.max_htlc.insert(0, fromPath.max_htlc[index])
+        if fromPath.max_htlc[index] < toPath.path_max_htlc or toPath.path_max_htlc == 0:
+            toPath.path_max_htlc = fromPath.max_htlc[index]
 
 def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channels_visited = []):
-    global recursive_depth, num_blinded_hops
+    global recursive_depth, num_blinded_hops, paths
     sm1 = state_machine()
 
     # Open the JSON file for reading
@@ -150,7 +175,7 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channel
                                         node_channels_peers(sm1.data['edges.item.node1_pub'], path, json_file, channels_visited)
                                 else:    
                                     break                                    
-            # Exhausted the node_id connections it can be removed from the recursive list
+            # Exhausted the node_id connections the depth can be decremented
             recursive_depth -= 1
             return
                     
@@ -175,7 +200,6 @@ def main(json_file, amount, dest):
                     if sm.event(event, prefix, value) is True:
                         if sm.data['data_type'] == "nodes":
                             if sm.data['nodes.item.pub_key'] == dest:
-#                                root = TreeNode(dest)
                                 paths.append(BlindedPath())
                                 node_channels_peers(dest, paths[len(paths)-1] , json_file)
                                 break
