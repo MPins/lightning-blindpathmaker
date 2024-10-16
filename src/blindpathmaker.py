@@ -96,7 +96,7 @@ def clone_path(fromPath: BlindedPath, toPath: BlindedPath):
         if fromPath.max_htlc[index] < toPath.path_max_htlc or toPath.path_max_htlc == 0:
             toPath.path_max_htlc = fromPath.max_htlc[index]
 
-def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channels_visited = []):
+def node_channels_peers(node_id: str, path: BlindedPath, json_file: str):
     global recursive_depth, num_blinded_hops, paths
     sm1 = state_machine()
 
@@ -113,10 +113,9 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channel
                 # Takes the data to mount the output
                 if sm1.event(event, prefix, value) is True:
                     if sm1.data['data_type'] == "edges":                                      
-                        if sm1.data['edges.item.channel_id'] not in channels_visited:
+                        if sm1.data['edges.item.channel_id'] not in path.channel_id:
                             if sm1.data['edges.item.node1_pub'] == node_id:
                                 if recursive_depth <= num_blinded_hops:
-                                    channels_visited.append(sm1.data['edges.item.channel_id'])
                                     if path_is_used is True:
                                         paths.append(BlindedPath())
                                         if recursive_depth > 1:
@@ -130,7 +129,7 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channel
                                                                 int(sm1.data['edges.item.node2_policy.min_htlc']),
                                                                 int(sm1.data['edges.item.node2_policy.max_htlc_msat'])
                                                                 )
-                                        node_channels_peers(sm1.data['edges.item.node2_pub'], paths[len(paths)-1], json_file, channels_visited)
+                                        node_channels_peers(sm1.data['edges.item.node2_pub'], paths[len(paths)-1], json_file)
                                     else:
                                         path_is_used = True
                                         path.add_hop(sm1.data['edges.item.node2_pub'],
@@ -141,12 +140,11 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channel
                                                     int(sm1.data['edges.item.node2_policy.fee_rate_milli_msat']),
                                                     int(sm1.data['edges.item.node2_policy.min_htlc']),
                                                     int(sm1.data['edges.item.node2_policy.max_htlc_msat'])                                                )
-                                        node_channels_peers(sm1.data['edges.item.node2_pub'], path, json_file, channels_visited)
+                                        node_channels_peers(sm1.data['edges.item.node2_pub'], path, json_file)
                                 else:
                                     break                                    
                             elif sm1.data['edges.item.node2_pub'] == node_id:
                                 if recursive_depth <= num_blinded_hops:
-                                    channels_visited.append(sm1.data['edges.item.channel_id'])
                                     if path_is_used is True:
                                         paths.append(BlindedPath())
                                         if recursive_depth > 1:
@@ -160,7 +158,7 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channel
                                                                 int(sm1.data['edges.item.node1_policy.min_htlc']),
                                                                 int(sm1.data['edges.item.node1_policy.max_htlc_msat'])
                                                                 )
-                                        node_channels_peers(sm1.data['edges.item.node1_pub'], paths[len(paths)-1], json_file, channels_visited)
+                                        node_channels_peers(sm1.data['edges.item.node1_pub'], paths[len(paths)-1], json_file)
                                     else:
                                         path_is_used = True
                                         path.add_hop(sm1.data['edges.item.node1_pub'],
@@ -172,7 +170,7 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str, channel
                                                     int(sm1.data['edges.item.node1_policy.min_htlc']),
                                                     int(sm1.data['edges.item.node1_policy.max_htlc_msat'])
                                                     )
-                                        node_channels_peers(sm1.data['edges.item.node1_pub'], path, json_file, channels_visited)
+                                        node_channels_peers(sm1.data['edges.item.node1_pub'], path, json_file)
                                 else:    
                                     break                                    
             # Exhausted the node_id connections the depth can be decremented
@@ -202,8 +200,9 @@ def main(json_file, amount, dest):
                             if sm.data['nodes.item.pub_key'] == dest:
                                 paths.append(BlindedPath())
                                 node_channels_peers(dest, paths[len(paths)-1] , json_file)
+                                dest_found = True
                                 break
-                if 'root' not in locals():
+                if 'dest_found' not in locals():
                     print(f"Destination not found: {dest}")
                 
             except ijson.JSONError as e:
