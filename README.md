@@ -53,5 +53,8 @@ git clone https://github.com/MPins/lightning-blindpathmaker
 
 Go to the source folder and make sure you can run the blindpathmaker.py python program.
 
+```sh
 python blindpathmaker.py <json_file> <amount> <destination> <num_blinded_hops>
+```
+
 You can start using some json file examples on the graphs folder. The nodenamer will create the file blindepath.json in the current directory.
