@@ -73,7 +73,7 @@ class BlindedPath:
         if max_htlc < self.path_max_htlc or self.path_max_htlc == 0:
             self.path_max_htlc = max_htlc
 
-# TODO clone the path until the recursive depth   
+# Clone the path until the recursive depth   
 def clone_path(fromPath: BlindedPath, toPath: BlindedPath):
     # Cloning the path discarting the alst hop, as we are inserting a hop at the same level 
     # of the last level.
@@ -109,17 +109,24 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str):
             for prefix, event, value in parser:
                 # Process the JSON events as needed
                 # Perform transitions
-                # If the transition results in completed nodes or edges data
-                # Takes the data to mount the output
+                # If the transition results in completed edges data
+                # Takes the channel data to insert on path
                 if sm1.event(event, prefix, value) is True:
-                    if sm1.data['data_type'] == "edges":                                      
+                    if sm1.data['data_type'] == "edges":
+                        # If the channel is part of the current channel list already move to the next event                                      
                         if sm1.data['edges.item.channel_id'] not in path.channel_id:
+                            # Get the channel which current node is edge of it
                             if sm1.data['edges.item.node1_pub'] == node_id:
+                                # Skip if te depth was aleready reached
                                 if recursive_depth <= num_blinded_hops:
+                                    # If a path was already created on the current depth, create a new one
                                     if path_is_used is True:
                                         paths.append(BlindedPath())
+                                        # If depth is greater than one, the new path should be a clone of the current one
+                                        # where another branch is being created
                                         if recursive_depth > 1:
                                             clone_path(path, paths[len(paths)-1])
+                                        # Create a leef on the current path
                                         paths[len(paths)-1].add_hop(sm1.data['edges.item.node2_pub'],
                                                                 sm1.data['edges.item.channel_id'],
                                                                 int(sm1.data['edges.item.capacity']),
