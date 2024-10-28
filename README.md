@@ -25,14 +25,15 @@ Output a key/value list of possible recipients:
 - A json representation of the blinded path(s) to use for the recipient
 ```
 {
-    "introduction_node": "pubkey",
-    "blinded_nodes": [“pubkey1”, “pubkey2”],
+    "Introduction_node": "pubkey",
+    "Anonymity" : "0",
+    "Blinded_nodes": [“pubkey1”, “pubkey2”],
     "Nodes_channel": ["channel_id1", "channel_id2"]
-    "fee_base_msat": uint64,
-    "fee_rate_milli_msat": uint64,
-    "min_htlc": uint64,
-    "max_htlc_msat": unit64,
-    "time_lock_delta": uint32,
+    "Fee_base_msat": uint64,
+    "Fee_rate_milli_msat": uint64,
+    "Min_htlc": uint64,
+    "Max_htlc_msat": unit64,
+    "Time_lock_delta": uint32,
 }
 ```
 # The Metric
