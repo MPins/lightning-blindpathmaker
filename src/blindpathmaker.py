@@ -308,6 +308,36 @@ def main(json_file, amount, dest):
             anonymity(path.node_id[0], regularPaths[len(regularPaths)-1], json_file)
             path.anonymity = len(nodesAtPath)
 
+        # For the found blinded paths lets greate the output considering the amount restriction
+        filename = "pathmaker.json"
+        with open(filename, 'w', encoding='utf-8') as f_out:
+            f_out.write("{\n\t\"Blinded Path Maker Version\": \"0.1.0\",\n")
+            f_out.write("\t\"Blinded_Paths\": \n\t[\n")
+            line = ""
+            for path in paths:
+                f_out.write(line)
+                if (path.max_capacity > int (amount)):
+                    f_out.write("\t\t{" + "\n" + "\t\t\t" + "\"Introduction_node\": \"" + str(path.node_id[0]) + "\",\n")
+                    f_out.write("\t\t\t" + "\"Anonymity\":" + str(path.anonymity) + ",\n")
+                    line = ("\t\t\t" + "\"Blinded_nodes\": [")
+                    for node in path.node_id:
+                        line += "\"" + str(node) + "\","
+                    line = line[:-1] + "],\n"
+                    f_out.write(line)
+                    line = ("\t\t\t" + "\"Blinded_channels\": [")
+                    for channel in path.channel_id:
+                        line += "\"" + str(channel) + "\","
+                    line = line[:-1] + "],\n"
+                    f_out.write(line)
+                    f_out.write("\t\t\t" + "\"Fee_base_msat\":" + str(path.total_fee_base_msat) + ",\n")
+                    f_out.write("\t\t\t" + "\"Fee_rate_milli_msat\":" + str(path.total_fee_rate_milli_msat) + ",\n")
+                    f_out.write("\t\t\t" + "\"Min_htlc\":" + str(path.path_min_htlc) + ",\n")
+                    f_out.write("\t\t\t" + "\"Max_htlc_msat\":" + str(path.path_max_htlc) + ",\n")
+                    f_out.write("\t\t\t" + "\"Time_lock_delta\":" + str(path.total_time_lock_delta) + "\n\t\t}")
+                    line = ",\n"
+            f_out.write("\n\t]\n}")
+                
+
     except Exception as e:
         print(f"An error occurred: {e}")
                 
