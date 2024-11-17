@@ -17,9 +17,6 @@ regularPaths = []
 # Default vale to num of blinded hops
 num_blinded_hops = 2
 
-anonymityMetric = 0
-nodesAtPath = []
-
 # This function receives input JSON file and create the new output JSON file 
 # without the alias field.
 # Sometimes the field ends on the next line with the comma (,)
@@ -59,6 +56,7 @@ class BlindedPath:
         self.node_id = []
         self.channel_id = []
         self.anonymity = 0
+        self.feasability = 0
         self.capacity = []
         self.max_capacity = 0
         self.time_lock_delta = []
@@ -206,8 +204,8 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str):
         except ijson.JSONError as e:
             print(f"Error parsing JSON: {e}")
 
-def anonymity(node_id, path: RegularPath, json_file: str):
-    global recursive_depth, num_blinded_hops, regularPaths, nodesAtPath
+def anonymity(node_id, path: RegularPath, nodesAtPath, json_file: str):
+    global recursive_depth, num_blinded_hops, regularPaths
 
     sm = state_machine()
 
@@ -239,11 +237,11 @@ def anonymity(node_id, path: RegularPath, json_file: str):
                                             clone_regular_path(path, regularPaths[len(regularPaths)-1])
                                         # Create a leef on the current path
                                         regularPaths[len(paths)-1].add_hop(sm.data['edges.item.node2_pub'],sm.data['edges.item.channel_id'])
-                                        anonymity(sm.data['edges.item.node2_pub'], regularPaths[len(regularPaths)-1], json_file)
+                                        anonymity(sm.data['edges.item.node2_pub'], regularPaths[len(regularPaths)-1], nodesAtPath, json_file)
                                     else:
                                         path_is_used = True
                                         path.add_hop(sm.data['edges.item.node2_pub'], sm.data['edges.item.channel_id'])                                                
-                                        anonymity(sm.data['edges.item.node2_pub'], path, json_file)
+                                        anonymity(sm.data['edges.item.node2_pub'], path, nodesAtPath, json_file)
                                     if(sm.data['edges.item.node2_pub'] not in nodesAtPath):
                                         nodesAtPath.append(sm.data['edges.item.node2_pub'])
                                 else:
@@ -255,11 +253,11 @@ def anonymity(node_id, path: RegularPath, json_file: str):
                                         if recursive_depth > 1:
                                             clone_regular_path(path, regularPaths[len(regularPaths)-1])
                                         regularPaths[len(regularPaths)-1].add_hop(sm.data['edges.item.node1_pub'], sm.data['edges.item.channel_id'])
-                                        anonymity(sm.data['edges.item.node1_pub'], regularPaths[len(regularPaths)-1], json_file)
+                                        anonymity(sm.data['edges.item.node1_pub'], regularPaths[len(regularPaths)-1], nodesAtPath, json_file)
                                     else:
                                         path_is_used = True
                                         path.add_hop(sm.data['edges.item.node1_pub'],sm.data['edges.item.channel_id'])
-                                        anonymity(sm.data['edges.item.node1_pub'], path, json_file)
+                                        anonymity(sm.data['edges.item.node1_pub'], path, nodesAtPath, json_file)
                                     if(sm.data['edges.item.node2_pub'] not in nodesAtPath):
                                         nodesAtPath.append(sm.data['edges.item.node2_pub'])
 
@@ -273,7 +271,7 @@ def anonymity(node_id, path: RegularPath, json_file: str):
             print(f"Error parsing JSON: {e}")
 
 def main(json_file, amount, dest):
-    global paths, regularPaths, recursive_depth, anonymityMetric, nodesAtPath
+    global paths, regularPaths, recursive_depth
     try:
         # Create an instance of the state machine
         sm = state_machine()
@@ -305,10 +303,11 @@ def main(json_file, amount, dest):
             recursive_depth = 0
             nodesAtPath = []
             regularPaths.append(RegularPath())
-            anonymity(path.node_id[0], regularPaths[len(regularPaths)-1], json_file)
+            anonymity(path.node_id[0], regularPaths[len(regularPaths)-1], nodesAtPath, json_file)
             path.anonymity = len(nodesAtPath)
+            path.feasability = path.max_capacity/int(amount)
 
-        # For the found blinded paths lets greate the output considering the amount restriction
+        # For the found blinded paths lets create the output considering the amount restriction
         filename = "pathmaker.json"
         with open(filename, 'w', encoding='utf-8') as f_out:
             f_out.write("{\n\t\"Blinded Path Maker Version\": \"0.1.0\",\n")
@@ -319,6 +318,7 @@ def main(json_file, amount, dest):
                 if (path.max_capacity > int (amount)):
                     f_out.write("\t\t{" + "\n" + "\t\t\t" + "\"Introduction_node\": \"" + str(path.node_id[0]) + "\",\n")
                     f_out.write("\t\t\t" + "\"Anonymity\": " + str(path.anonymity) + ",\n")
+                    f_out.write("\t\t\t" + "\"Feasability\": " + str(path.feasability) + ",\n")
                     line = ("\t\t\t" + "\"Blinded_nodes\": [")
                     for node in path.node_id:
                         line += "\"" + str(node) + "\","
