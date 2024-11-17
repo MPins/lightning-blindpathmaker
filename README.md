@@ -27,6 +27,7 @@ Output a key/value list of possible recipients:
 {
     "Introduction_node": "pubkey",
     "Anonymity" : "0",
+    "Feasability" : "0",
     "Blinded_nodes": [“pubkey1”, “pubkey2”],
     "Nodes_channel": ["channel_id1", "channel_id2"]
     "Fee_base_msat": uint64,
@@ -37,13 +38,19 @@ Output a key/value list of possible recipients:
 }
 ```
 # The Metric
-We are using a metric that we call "Anonymity" to set the blinded path. This value represents the number of nodes that could feasibly be recipients for the blinded payment:
+We are using two metrics to set the blinded path. 
+The first one we call "Anonymity", this value represents the number of nodes that could feasibly be recipients for the blinded payment:
 - They are within len(blinded hops) of the introduction node.
 - The fee/cltv policy to reach the node is less than the aggregate reported by the blinded path
 
 A trivial example of this metric is that a value of 1 would mean that the blinded path simply
 selects the recipient as the introduction node and has no dummy hops - it is the only node that
 could possibly be receiving this payment.
+
+The second one we call "feasability", this value represents the size of the biggest payment possible trought the blinded path divided by the size of the invoice. 
+
+A trivial example of this metric is that a value of 1 would mean that the blinded path simply
+is as large as the invoice.
 
 # How to Run
 To run the Bind Path Maker is very simple, just clone the git repository on your machine.
