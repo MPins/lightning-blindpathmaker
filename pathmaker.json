@@ -5,6 +5,7 @@
 		{
 			"Introduction_node": "031fdb4be3756ad459d54a3e3bafa119f47d4b25e7da7e513c336956d3ff7875de",
 			"Anonymity": 3,
+			"Feasability": 200.0,
 			"Blinded_nodes": ["031fdb4be3756ad459d54a3e3bafa119f47d4b25e7da7e513c336956d3ff7875de","02e4d4ce745b09d34dc9ee2978d8e7c2d8d3a135d96d7143716c9b38c6e6a66d4f"],
 			"Blinded_channels": ["189116000043008","258385232592896"],
 			"Fee_base_msat": 2000,
@@ -16,6 +17,7 @@
 		{
 			"Introduction_node": "0293263931bb51b52bde86d6b7cfa541e64a2a8f462d775576c95c44ba6329a4b0",
 			"Anonymity": 4,
+			"Feasability": 100.0,
 			"Blinded_nodes": ["0293263931bb51b52bde86d6b7cfa541e64a2a8f462d775576c95c44ba6329a4b0","02e4d4ce745b09d34dc9ee2978d8e7c2d8d3a135d96d7143716c9b38c6e6a66d4f"],
 			"Blinded_channels": ["200111116320768","258385232592896"],
 			"Fee_base_msat": 2000,
@@ -27,6 +29,7 @@
 		{
 			"Introduction_node": "031fdb4be3756ad459d54a3e3bafa119f47d4b25e7da7e513c336956d3ff7875de",
 			"Anonymity": 3,
+			"Feasability": 200.0,
 			"Blinded_nodes": ["031fdb4be3756ad459d54a3e3bafa119f47d4b25e7da7e513c336956d3ff7875de","03d2e26d4dbd3b5584acdef9437b0ecb1a1dc02371681eca811fa5d3175c6abf65"],
 			"Blinded_channels": ["168225279115264","261683767476224"],
 			"Fee_base_msat": 2000,
@@ -38,6 +41,7 @@
 		{
 			"Introduction_node": "0293263931bb51b52bde86d6b7cfa541e64a2a8f462d775576c95c44ba6329a4b0",
 			"Anonymity": 4,
+			"Feasability": 200.0,
 			"Blinded_nodes": ["0293263931bb51b52bde86d6b7cfa541e64a2a8f462d775576c95c44ba6329a4b0","03d2e26d4dbd3b5584acdef9437b0ecb1a1dc02371681eca811fa5d3175c6abf65"],
 			"Blinded_channels": ["171523813998592","261683767476224"],
 			"Fee_base_msat": 2000,
@@ -49,6 +53,7 @@
 		{
 			"Introduction_node": "03d2e26d4dbd3b5584acdef9437b0ecb1a1dc02371681eca811fa5d3175c6abf65",
 			"Anonymity": 4,
+			"Feasability": 200.0,
 			"Blinded_nodes": ["03d2e26d4dbd3b5584acdef9437b0ecb1a1dc02371681eca811fa5d3175c6abf65","0293263931bb51b52bde86d6b7cfa541e64a2a8f462d775576c95c44ba6329a4b0"],
 			"Blinded_channels": ["171523813998592","264982302359552"],
 			"Fee_base_msat": 2000,
@@ -60,6 +65,7 @@
 		{
 			"Introduction_node": "02e4d4ce745b09d34dc9ee2978d8e7c2d8d3a135d96d7143716c9b38c6e6a66d4f",
 			"Anonymity": 4,
+			"Feasability": 100.0,
 			"Blinded_nodes": ["02e4d4ce745b09d34dc9ee2978d8e7c2d8d3a135d96d7143716c9b38c6e6a66d4f","0293263931bb51b52bde86d6b7cfa541e64a2a8f462d775576c95c44ba6329a4b0"],
 			"Blinded_channels": ["200111116320768","264982302359552"],
 			"Fee_base_msat": 2000,
