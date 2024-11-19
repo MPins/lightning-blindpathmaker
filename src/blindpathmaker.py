@@ -276,6 +276,7 @@ def main(json_file, amount, dest):
         # Create an instance of the state machine
         sm = state_machine()
         # Open the JSON file for reading
+        count = 0
         with open(json_file, 'r', encoding='utf-8', errors='ignore') as file:
             try:
                 parser = ijson.parse(file)  # Create an iterator for the JSON data
@@ -285,12 +286,15 @@ def main(json_file, amount, dest):
                     # If the transition results in completed nodes or edges data
                     # Takes the data to mount the output
                     if sm.event(event, prefix, value) is True:
+                        count += 1
                         if sm.data['data_type'] == "nodes":
                             if sm.data['nodes.item.pub_key'] == dest:
+                                print(f"\nDestination found: {dest}")
                                 paths.append(BlindedPath())
                                 node_channels_peers(dest, paths[len(paths)-1] , json_file)
                                 dest_found = True
                                 break
+                    print(f"Nodes inspected: {count}", end="\r")
                 if 'dest_found' not in locals():
                     print(f"Destination not found: {dest}")
 
