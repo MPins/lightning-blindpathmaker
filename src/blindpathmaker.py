@@ -133,12 +133,13 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str):
                         # If the channel is part of the current channel list already move to the next event                                      
                         if sm.data['edges.item.channel_id'] not in path.channel_id:
                             # Get the channel which current node is edge of it
-                            if sm.data['edges.item.node1_pub'] == node_id:
+                            if sm.data['edges.item.node1_pub'] == node_id and sm.data.get('edges.item.node2_policy') != '':
                                 # Skip if te depth was aleready reached
                                 if recursive_depth <= num_blinded_hops:
                                     # If a path was already created on the current depth, create a new one
                                     if path_is_used is True:
                                         paths.append(BlindedPath())
+                                        print(f"Paths created: {len(paths)}", end="\r")
                                         # If depth is greater than one, the new path should be a clone of the current one
                                         # where another branch is being created
                                         if recursive_depth > 1:
@@ -163,14 +164,16 @@ def node_channels_peers(node_id: str, path: BlindedPath, json_file: str):
                                                     int(sm.data['edges.item.node2_policy.fee_base_msat']),
                                                     int(sm.data['edges.item.node2_policy.fee_rate_milli_msat']),
                                                     int(sm.data['edges.item.node2_policy.min_htlc']),
-                                                    int(sm.data['edges.item.node2_policy.max_htlc_msat'])                                                )
+                                                    int(sm.data['edges.item.node2_policy.max_htlc_msat'])
+                                                    )                                                
                                         node_channels_peers(sm.data['edges.item.node2_pub'], path, json_file)
                                 else:
                                     break                                    
-                            elif sm.data['edges.item.node2_pub'] == node_id:
+                            elif sm.data['edges.item.node2_pub'] == node_id and sm.data.get('edges.item.node1_policy') != '':
                                 if recursive_depth <= num_blinded_hops:
                                     if path_is_used is True:
                                         paths.append(BlindedPath())
+                                        print(f"Paths created: {len(paths)}", end="\r")
                                         if recursive_depth > 1:
                                             clone_path(path, paths[len(paths)-1])
                                         paths[len(paths)-1].add_hop(sm.data['edges.item.node1_pub'],
@@ -276,7 +279,7 @@ def main(json_file, amount, dest):
         # Create an instance of the state machine
         sm = state_machine()
         # Open the JSON file for reading
-        count = 0
+        count = 1
         with open(json_file, 'r', encoding='utf-8', errors='ignore') as file:
             try:
                 parser = ijson.parse(file)  # Create an iterator for the JSON data
@@ -291,7 +294,9 @@ def main(json_file, amount, dest):
                             if sm.data['nodes.item.pub_key'] == dest:
                                 print(f"\nDestination found: {dest}")
                                 paths.append(BlindedPath())
+                                print(f"Paths created: {len(paths)}", end="\r")
                                 node_channels_peers(dest, paths[len(paths)-1] , json_file)
+                                print("")
                                 dest_found = True
                                 break
                     print(f"Nodes inspected: {count}", end="\r")
