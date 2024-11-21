@@ -15,7 +15,7 @@ recursive_depth = 0
 paths = []
 regularPaths = []
 # Default vale to num of blinded hops
-num_blinded_hops = 2
+num_blinded_hops = 1
 
 # This function receives input JSON file and create the new output JSON file 
 # without the alias field.
@@ -239,7 +239,7 @@ def anonymity(node_id, path: RegularPath, nodesAtPath, json_file: str):
                                         if recursive_depth > 1:
                                             clone_regular_path(path, regularPaths[len(regularPaths)-1])
                                         # Create a leef on the current path
-                                        regularPaths[len(paths)-1].add_hop(sm.data['edges.item.node2_pub'],sm.data['edges.item.channel_id'])
+                                        regularPaths[len(regularPaths)-1].add_hop(sm.data['edges.item.node2_pub'],sm.data['edges.item.channel_id'])
                                         anonymity(sm.data['edges.item.node2_pub'], regularPaths[len(regularPaths)-1], nodesAtPath, json_file)
                                     else:
                                         path_is_used = True
@@ -308,13 +308,17 @@ def main(json_file, amount, dest):
 
         # For the found blinded paths lets calculate the anonymity metric
         # This value represents the number of nodes that could feasibly be recipients for the blinded payment
+        count = 0
         for path in paths:
+            count += 1
             recursive_depth = 0
             nodesAtPath = []
             regularPaths.append(RegularPath())
             anonymity(path.node_id[0], regularPaths[len(regularPaths)-1], nodesAtPath, json_file)
             path.anonymity = len(nodesAtPath)
             path.feasability = path.max_capacity/int(amount)
+            print(f"Calculating Metrics : {count}", end="\r")
+        print("")
 
         # For the found blinded paths lets create the output considering the amount restriction
         filename = "pathmaker.json"
@@ -322,7 +326,9 @@ def main(json_file, amount, dest):
             f_out.write("{\n\t\"Blinded Path Maker Version\": \"0.1.0\",\n")
             f_out.write("\t\"Blinded_Paths\": \n\t[\n")
             line = ""
+            count = 0
             for path in paths:
+                count += 1
                 f_out.write(line)
                 if (path.max_capacity > int (amount)):
                     f_out.write("\t\t{" + "\n" + "\t\t\t" + "\"Introduction_node\": \"" + str(path.node_id[0]) + "\",\n")
@@ -344,7 +350,9 @@ def main(json_file, amount, dest):
                     f_out.write("\t\t\t" + "\"Max_htlc_msat\": " + str(path.path_max_htlc) + ",\n")
                     f_out.write("\t\t\t" + "\"Time_lock_delta\": " + str(path.total_time_lock_delta) + "\n\t\t}")
                     line = ",\n"
+                    print(f"Creating de output file : {count}", end="\r")
             f_out.write("\n\t]\n}")
+            print("")
                 
 
     except Exception as e:
