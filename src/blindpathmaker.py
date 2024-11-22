@@ -350,7 +350,7 @@ def main(json_file, amount, dest):
                     f_out.write("\t\t\t" + "\"Max_htlc_msat\": " + str(path.path_max_htlc) + ",\n")
                     f_out.write("\t\t\t" + "\"Time_lock_delta\": " + str(path.total_time_lock_delta) + "\n\t\t}")
                     line = ",\n"
-                    print(f"Creating de output file : {count}", end="\r")
+                    print(f"Creating paths on output file : {count}", end="\r")
             f_out.write("\n\t]\n}")
             print("")
                 
